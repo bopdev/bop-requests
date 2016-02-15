@@ -24,7 +24,7 @@ $wpdb->bop_requests = $wpdb->prefix . 'bop_requests';
 $wpdb->bop_requests_user_karma = $wpdb->prefix . 'bop_requests_user_karma';
 $wpdb->bop_requests_comments = $wpdb->prefix . 'bop_requests_comments';
 $wpdb->bop_requests_requestees = $wpdb->prefix . 'bop_requests_requestees';
-$wpdb->bop_requests_meta = $wpdb->prefix . 'bop_requests_meta';
+$wpdb->bop_requestsmeta = $wpdb->prefix . 'bop_requestsmeta';
 
 
 /* Activation hook 
