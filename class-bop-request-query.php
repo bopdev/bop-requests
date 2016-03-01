@@ -21,6 +21,21 @@ class Bop_Request_Query{
     public $query_vars = array();
     
     /**
+     * Query vars, after parsing
+     *
+     * @since 0.2.0
+     * @access public
+     * @var array
+     */
+    public $query_vars_for_sql = array(
+		'fields'=>'',
+		'clauses'=>array(),
+		'orderby'=>array(),
+		'limit'=>-1,
+		'offset'=>0
+	);
+    
+    /**
      * default query vars.
      *
      * @since 0.2.0
@@ -33,6 +48,8 @@ class Bop_Request_Query{
 		'clauses'=>array(),
 		'fields'=>'',
 		'orderby'=>array(),
+		'limit'=>-1,
+		'offset'=>0,
 		'cache_each_item'=>true,
 		'cache_query_results'=>false
     );
@@ -45,6 +62,15 @@ class Bop_Request_Query{
      * @var string
      */
     public $default_relation = 'AND';
+    
+    /**
+     * default ORDER BY direction.
+     *
+     * @since 0.2.0
+     * @access public
+     * @var string
+     */
+    public $default_direction = 'DESC';
     
     /**
      * Table aliases.
@@ -133,13 +159,13 @@ class Bop_Request_Query{
 	}
 	
 	public function reset(){
-		unset($this->query);
+		unset( $this->query );
 		$this->query_vars = array();
-		unset($this->tax_query);
-		unset($this->meta_query);
-		unset($this->date_query);
+		unset( $this->tax_query );
+		unset( $this->meta_query );
+		unset( $this->date_query );
 		unset( $this->sql );
-		unset($this->collection);
+		unset( $this->collection );
 		$this->count = 0;
 		$this->total_count = 0;
 		$this->current_index = -1;
@@ -160,11 +186,7 @@ class Bop_Request_Query{
 			$this->query = $query;
 		}
 		
-		$this->query_vars = wp_parse_args( $this->query, $this->default_query_vars );
-		
-		$qvs = &$this->query_vars;
-		
-		$qvs['clauses'] = $this->fill_clauses( $qvs['clauses'] );
+		$qvs = wp_parse_args( $this->query, $this->default_query_vars );
 		
 		//add id as clause if given
 		if( ! empty( $qvs['id'] ) ){
@@ -182,7 +204,19 @@ class Bop_Request_Query{
 			}
 		}
 		
-		$this->query_vars_hash = md5( serialize( $this->query_vars ) );
+		$qvs['clauses'] = $this->fill_clauses( $qvs['clauses'] );
+		
+		//standardise orderby
+		foreach( (array)$qvs['orderby'] as $ob ){
+			$ob = (array)$ob;
+			$ob[1] = isset( $ob[1] ) ? ( strtoupper( $ob[1] ) !== $this->default_direction ? 'ASC' : 'DESC' ) : $this->default_direction;
+		}
+		
+		$this->query_vars = $qvs;
+		
+		$this->query_vars_for_sql = array_intersect_key( $qvs, $this->query_vars_for_sql );
+		
+		$this->query_vars_hash = md5( serialize( $this->query_vars_for_sql ) );
 		
 	}
 	
@@ -207,10 +241,16 @@ class Bop_Request_Query{
 				}else{
 					unset( $clauses[$k] );
 				}
+			}elseif( is_string( $k ) ){
+				if( in_array( $k, array( 'meta_query', 'date_query', 'tax_query' ) ) ){
+					$clauses[$k] = $clause;
+				}
+			}else{
+				unset( $clauses[$k] );
 			}
 		}
 		if( ! empty( $clauses[0] ) ){
-			$clauses['relation'] = ( isset( $clauses['relation'] ) && str_to_upper( $clauses['relation'] ) === $this->default_relation ) ? $this->default_relation : ( $this->default_relation === 'AND' ? 'AND' : 'OR' );
+			$clauses['relation'] = isset( $clause['relation'] ) ? ( strtoupper( $clause['relation'] ) !== $this->default_relation ? 'ASC' : 'DESC' ) : $this->default_relation;
 		}else{
 			$clauses = array();
 		}
@@ -288,9 +328,72 @@ class Bop_Request_Query{
 	public function prepare_sql(){
 		global $wpdb;
 		
+		$qvs = &$this->query_vars_for_sql;
 		
+		//resolve SELECT
+		$select = "";
+		switch( $qvs['fields'] ){
+			case 'ids':
+				$select = "id";
+			break;
+			default:
+				$select = "*";
+		}
 		
-		$this->sql = "";
+		//resolve FROM
+		$from = "{$wpdb->bop_requests}";
+		
+		//resolve clauses
+		$clauses = $this->get_clause_sql( $qvs['clauses'] );
+		$join = $clauses['join'];
+		$where = $clauses['where'];
+		//########## TO DO ###############
+		
+		//resolve ORDER BY
+		$orderby = "";
+		foreach( $qvs['orderby'] as $ob ){
+			$ob = (array)$ob;
+			$comma = $orderby ? ", " : "";
+			
+			switch( $ob[0] ){
+				default:
+					$orderby .= $comma . "{$ob[0]} {$ob[1]}";
+			}
+		}
+		if( ! $orderby ){
+			
+		}
+		
+		//resolve LIMIT
+		$limit = "";
+		if( isset( $qvs['limit'] ) && $qvs['limit'] > 0 ){
+			$limit = $qvs['limit'];
+		}
+		
+		//resolve OFFSET
+		$offset = "";
+		if( isset( $qvs['offset'] ) && $qvs['offset'] > 0 ){
+			$offset = $qvs['offset'];
+		}
+		
+		$this->sql = "SELECT $select";
+		$this->sql .= "\nFROM $from";
+		if( $join )
+			$this->sql .= "\n$join";
+		if( $where )
+			$this->sql .= "\nWHERE $where";
+		if( $orderby )
+			$this->sql .= "\nORDER BY $orderby";
+		if( $limit )
+			$this->sql .= "\nLIMIT $limit";
+		if( $offset )
+			$this->sql .= "\nOFFSET $offset";
+	}
+	
+	public function get_clause_sql( $clauses ){
+		$join = "";
+		$where = "";
+		return array( 'join'=>$join, 'where'=>$where );
 	}
 	
 	public function get_db_response(){
