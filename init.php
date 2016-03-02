@@ -10,7 +10,7 @@ License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Domain Path: /languages
 Text Domain: bop-requests
 */
-
+return;
 
 //Reject if accessed directly
 defined( 'ABSPATH' ) || die( 'Our survey says: ... X.' );
