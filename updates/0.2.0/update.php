@@ -16,7 +16,7 @@ $charset_collate = $wpdb->get_charset_collate();
 $max_index_length = 191;
 
 $create_tables_sql = "
-CREATE TABLE $wpdb->bop_requests (
+CREATE TABLE {$wpdb->bop_requests} (
 	request_id bigint(20) unsigned NOT NULL auto_increment,
 	object_class varchar(31) NOT NULL default '',
 	object_id bigint(20) unsigned NOT NULL default 0,
@@ -35,19 +35,19 @@ CREATE TABLE $wpdb->bop_requests (
 	KEY edited_gmt (edited_gmt),
 	KEY author_id (author_id)
 ) $charset_collate;
-CREATE TABLE $wpdb->bop_requests_user_karma (
+CREATE TABLE {$wpdb->bop_requests_user_karma} (
 	request_id bigint(20) unsigned NOT NULL default 0,
 	user_id bigint(20) unsigned NOT NULL default 0,
 	value tinyint(6) signed NOT NULL default 0,
 	PRIMARY KEY (request_id, user_id)
 ) $charset_collate;
-CREATE TABLE $wpdb->bop_requests_comments (
+CREATE TABLE {$wpdb->bop_requests_comments} (
 	comment_id bigint(20) unsigned NOT NULL default 0,
 	request_id bigint(20) unsigned NOT NULL default 0,
 	PRIMARY KEY (comment_id)
 	KEY request_id (request_id)
 ) $charset_collate;
-CREATE TABLE $wpdb->bop_requests_requestees (
+CREATE TABLE {$wpdb->bop_requests_requestees} (
 	requestee_id bigint(20) unsigned NOT NULL auto_increment,
 	request_id bigint(20) unsigned NOT NULL default 0,
 	user_id bigint(20) unsigned NOT NULL default 0,
@@ -55,7 +55,7 @@ CREATE TABLE $wpdb->bop_requests_requestees (
 	KEY request_id (request_id),
 	KEY user_id (user_id)
 ) $charset_collate;
-CREATE TABLE $wpdb->bop_requests_meta (
+CREATE TABLE {$wpdb->bop_requestsmeta} (
 	meta_id bigint(20) unsigned NOT NULL auto_increment,
 	request_id bigint(20) unsigned NOT NULL default 0,
 	meta_key varchar(255) default NULL,
