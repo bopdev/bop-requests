@@ -36,22 +36,28 @@ CREATE TABLE {$wpdb->bop_requests} (
 	KEY author_id (author_id)
 ) $charset_collate;
 CREATE TABLE {$wpdb->bop_requests_user_karma} (
+	id bigint(20) unsigned NOT NULL auto_increment,
 	request_id bigint(20) unsigned NOT NULL default 0,
 	user_id bigint(20) unsigned NOT NULL default 0,
 	value tinyint(6) signed NOT NULL default 0,
-	PRIMARY KEY (request_id, user_id)
+	PRIMARY KEY (id),
+	KEY request_id (request_id),
+	KEY user_id (user_id)
 ) $charset_collate;
 CREATE TABLE {$wpdb->bop_requests_comments} (
+	id bigint(20) unsigned NOT NULL auto_increment,
 	comment_id bigint(20) unsigned NOT NULL default 0,
 	request_id bigint(20) unsigned NOT NULL default 0,
-	PRIMARY KEY (comment_id)
+	PRIMARY KEY (id),
+	KEY comment_id (comment_id),
 	KEY request_id (request_id)
 ) $charset_collate;
 CREATE TABLE {$wpdb->bop_requests_requestees} (
-	requestee_id bigint(20) unsigned NOT NULL auto_increment,
+	id bigint(20) unsigned NOT NULL auto_increment,
 	request_id bigint(20) unsigned NOT NULL default 0,
 	user_id bigint(20) unsigned NOT NULL default 0,
-	PRIMARY KEY (requestee_id),
+	PRIMARY KEY (id),
+	KEY (request_id),
 	KEY request_id (request_id),
 	KEY user_id (user_id)
 ) $charset_collate;
@@ -68,6 +74,7 @@ CREATE TABLE {$wpdb->bop_requestsmeta} (
 require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
 dbDelta( $create_tables_sql );
 
+//used as a dummy id for tables like comments, so that they can be employed in this system w/o impacting the rest of WP.
 $master_id = wp_insert_post( array( 'post_type'=>'bop_requests_master', 'post_title'=>'Bop Requests Master', 'post_content'=>'Bop Requests Master Post.', 'post_status'=>'master' ) );
 
 add_option( 'bop_requests_master_post_id', $master_id, '', false );

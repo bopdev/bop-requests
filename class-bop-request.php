@@ -6,6 +6,8 @@
  */
 class Bop_Request{
 	
+	protected $_db;
+	
 	public $id;
 	
 	public $type;
@@ -37,6 +39,9 @@ class Bop_Request{
 	public $replies;
 	
 	public function __construct( $id = null ){
+		global $wpdb;
+		$this->_db = $wpdb;
+		
 		if( ! is_null( $id ) )
 			$this->load( $id );
 	}
