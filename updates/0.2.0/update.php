@@ -18,19 +18,19 @@ $max_index_length = 191;
 $create_tables_sql = "
 CREATE TABLE {$wpdb->bop_requests} (
 	request_id bigint(20) unsigned NOT NULL auto_increment,
-	object_class varchar(31) NOT NULL default '',
-	object_id bigint(20) unsigned NOT NULL default 0,
+	parent_class varchar(31) NOT NULL default '',
+	parent_id bigint(20) unsigned NOT NULL default 0,
 	created datetime NOT NULL default '0000-00-00 00:00:00',
 	created_gmt datetime NOT NULL default '0000-00-00 00:00:00',
 	edited datetime NOT NULL default '0000-00-00 00:00:00',
 	edited_gmt datetime NOT NULL default '0000-00-00 00:00:00',
 	content text NOT NULL,
 	karma int(11) NOT NULL default 0,
-	status varchar(20) NOT NULL default 1,
-	type varchar(20) NOT NULL default '',
+	status varchar(20) NOT NULL default 'pending',
+	type varchar(31) NOT NULL default 'custom',
 	author_id bigint(20) unsigned NOT NULL default 0,
 	PRIMARY KEY  (request_id),
-	KEY object_class_and_id (object_class, object_id),
+	KEY parent_class_and_id (parent_class, parent_id),
 	KEY created_gmt (created_gmt),
 	KEY edited_gmt (edited_gmt),
 	KEY author_id (author_id)
@@ -46,18 +46,17 @@ CREATE TABLE {$wpdb->bop_requests_user_karma} (
 ) $charset_collate;
 CREATE TABLE {$wpdb->bop_requests_comments} (
 	id bigint(20) unsigned NOT NULL auto_increment,
-	comment_id bigint(20) unsigned NOT NULL default 0,
 	request_id bigint(20) unsigned NOT NULL default 0,
+	comment_id bigint(20) unsigned NOT NULL default 0,
 	PRIMARY KEY (id),
-	KEY comment_id (comment_id),
-	KEY request_id (request_id)
+	KEY request_id (request_id),
+	KEY comment_id (comment_id)
 ) $charset_collate;
 CREATE TABLE {$wpdb->bop_requests_requestees} (
 	id bigint(20) unsigned NOT NULL auto_increment,
 	request_id bigint(20) unsigned NOT NULL default 0,
 	user_id bigint(20) unsigned NOT NULL default 0,
 	PRIMARY KEY (id),
-	KEY (request_id),
 	KEY request_id (request_id),
 	KEY user_id (user_id)
 ) $charset_collate;
